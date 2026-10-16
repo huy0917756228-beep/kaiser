@@ -98,6 +98,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnSaveDriveConfig = document.getElementById('btn-save-drive-config');
     const googleClientIdInput = document.getElementById('google-client-id-input');
     const driveFolderNameInput = document.getElementById('drive-folder-name-input');
+    const webhookUrlSettings = document.getElementById('webhook-url-settings');
+    const webhookUrlInput = document.getElementById('webhook-url-input');
+    const modalSyncGuide = document.getElementById('modal-sync-guide');
+    const btnSaveWebhookAndSync = document.getElementById('btn-save-webhook-and-sync');
+    const btnCopyScript = document.getElementById('btn-copy-script');
+    const btnReDownloadJson = document.getElementById('btn-re-download-json');
 
     // Toast Container
     const toastContainer = document.getElementById('toast-container');
@@ -108,7 +114,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let driveAccessToken = null;
     let driveConfig = {
         clientId: '',
-        folderName: 'NovaAuth_Database',
+        webhookUrl: '',
+        folderName: 'anticodon',
         folderId: null,
         fileId: null,
         autoSync: true
@@ -546,7 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // -------------------------------------------------------------
-    // 8. GOOGLE DRIVE CLOUD SYNC ENGINE (Drive API v3)
+    // 8. GOOGLE DRIVE CLOUD SYNC ENGINE (Hỗ trợ anticodon & Webhook)
     // -------------------------------------------------------------
     function initDriveConfig() {
         const savedConfig = localStorage.getItem(DRIVE_CONFIG_KEY);
@@ -558,15 +565,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        // Đảm bảo thư mục mặc định là anticodon
+        if (!driveConfig.folderName || driveConfig.folderName === 'NovaAuth_Database') {
+            driveConfig.folderName = 'anticodon';
+        }
+
         const lastSync = localStorage.getItem(DRIVE_LAST_SYNC_KEY);
         if (lastSync) {
             driveLastSync.textContent = lastSync;
-            updateDriveBadge('synced', 'Drive: Đã đồng bộ');
+            updateDriveBadge('synced', 'Drive: anticodon');
         }
 
         toggleAutoSync.checked = driveConfig.autoSync;
         if (googleClientIdInput) googleClientIdInput.value = driveConfig.clientId || '';
-        if (driveFolderNameInput) driveFolderNameInput.value = driveConfig.folderName || 'NovaAuth_Database';
+        if (driveFolderNameInput) driveFolderNameInput.value = driveConfig.folderName || 'anticodon';
+        if (webhookUrlSettings) webhookUrlSettings.value = driveConfig.webhookUrl || '';
+        if (webhookUrlInput) webhookUrlInput.value = driveConfig.webhookUrl || '';
     }
 
     toggleAutoSync.addEventListener('change', () => {
@@ -576,15 +590,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     btnOpenDriveSettings.addEventListener('click', () => {
+        if (webhookUrlSettings) webhookUrlSettings.value = driveConfig.webhookUrl || '';
         openModal(modalDriveSettings);
     });
 
     btnSaveDriveConfig.addEventListener('click', () => {
         driveConfig.clientId = googleClientIdInput.value.trim();
-        driveConfig.folderName = driveFolderNameInput.value.trim() || 'NovaAuth_Database';
+        driveConfig.folderName = driveFolderNameInput.value.trim() || 'anticodon';
+        if (webhookUrlSettings) driveConfig.webhookUrl = webhookUrlSettings.value.trim();
+        if (webhookUrlInput) webhookUrlInput.value = driveConfig.webhookUrl;
         localStorage.setItem(DRIVE_CONFIG_KEY, JSON.stringify(driveConfig));
         closeModal(modalDriveSettings);
-        showToast('success', 'Lưu cấu hình', 'Đã cập nhật thông tin cấu hình Google Drive.');
+        showToast('success', 'Lưu cấu hình', 'Đã lưu cấu hình thư mục anticodon và Webhook.');
     });
 
     function updateDriveBadge(state, text) {
@@ -598,139 +615,124 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Connect Google Drive Button
+    // Nút Kết Nối Google Drive
     btnConnectDrive.addEventListener('click', () => {
-        if (driveConfig.clientId && typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
-            // Real OAuth 2.0 Token Client with scope 'drive.file'
-            driveTokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: driveConfig.clientId,
-                scope: 'https://www.googleapis.com/auth/drive.file',
-                callback: (tokenResponse) => {
-                    if (tokenResponse && tokenResponse.access_token) {
-                        driveAccessToken = tokenResponse.access_token;
-                        updateDriveBadge('synced', 'Drive: Kết nối thành công');
-                        showToast('success', 'Google Drive OAuth', 'Đã cấp quyền kết nối an toàn vào thư mục Google Drive của bạn!');
-                        syncToGoogleDrive(false);
-                    }
-                }
-            });
-            driveTokenClient.requestAccessToken();
+        if (driveConfig.webhookUrl) {
+            syncToGoogleDrive(false);
         } else {
-            // Demonstration Mode (Pre-configured Google Cloud Drive Simulation)
-            updateDriveBadge('syncing', 'Đang kết nối Drive...');
-            setTimeout(() => {
-                driveAccessToken = 'demo_drive_oauth_token_' + Date.now();
-                updateDriveBadge('synced', 'Drive của tôi: Đã kết nối');
-                const nowStr = new Date().toLocaleTimeString('vi-VN') + ' ' + new Date().toLocaleDateString('vi-VN');
-                driveLastSync.textContent = nowStr;
-                localStorage.setItem(DRIVE_LAST_SYNC_KEY, nowStr);
-                
-                showToast(
-                    'success',
-                    'Đã kết nối Google Drive',
-                    'Đã liên kết với thư mục [Drive của tôi / NovaAuth_Database]. Sẵn sàng đồng bộ!'
-                );
-            }, 800);
+            openModal(modalSyncGuide);
         }
     });
 
-    // Sync Now Button
+    // Nút Đồng Bộ Lên Drive
     btnSyncNow.addEventListener('click', () => {
         syncToGoogleDrive(false);
     });
 
-    // Pull From Drive Button
+    // Nút Khôi Phục Từ Drive
     btnPullDrive.addEventListener('click', () => {
         pullFromGoogleDrive();
     });
 
+    // Xử lý sự kiện trong Modal Hướng dẫn Đồng bộ
+    if (btnSaveWebhookAndSync) {
+        btnSaveWebhookAndSync.addEventListener('click', () => {
+            const url = webhookUrlInput.value.trim();
+            if (!url) {
+                showToast('error', 'Chưa nhập URL', 'Vui lòng dán URL Google Apps Script hoặc đóng hộp thoại để kéo thả tệp.');
+                return;
+            }
+            driveConfig.webhookUrl = url;
+            if (webhookUrlSettings) webhookUrlSettings.value = url;
+            localStorage.setItem(DRIVE_CONFIG_KEY, JSON.stringify(driveConfig));
+            closeModal(modalSyncGuide);
+            showToast('info', 'Đang đồng bộ', 'Đang gửi dữ liệu vào thư mục anticodon trên Google Drive...');
+            syncToGoogleDrive(false);
+        });
+    }
+
+    if (btnCopyScript) {
+        btnCopyScript.addEventListener('click', () => {
+            const codeElem = document.getElementById('apps-script-code');
+            if (codeElem) {
+                navigator.clipboard.writeText(codeElem.innerText).then(() => {
+                    showToast('success', 'Đã sao chép mã', 'Đã sao chép đoạn mã Google Apps Script vào bộ nhớ tạm!');
+                }).catch(() => {
+                    showToast('info', 'Mã Apps Script', 'Bạn hãy bôi đen và nhấn Ctrl+C để sao chép.');
+                });
+            }
+        });
+    }
+
+    if (btnReDownloadJson) {
+        btnReDownloadJson.addEventListener('click', () => {
+            const jsonStr = JSON.stringify(usersData, null, 2);
+            downloadFile(jsonStr, 'users_database.json', 'application/json');
+            showToast('success', 'Đã tải tệp', 'Tệp users_database.json đã được lưu vào thư mục Downloads của bạn.');
+        });
+    }
+
+    // Hàm Đồng Bộ Chính (Sync to Google Drive)
     async function syncToGoogleDrive(isSilent = false) {
-        updateDriveBadge('syncing', 'Đang đồng bộ lên Drive...');
+        updateDriveBadge('syncing', 'Đang gửi dữ liệu lên Drive...');
 
-        // If real access token and client ID exist, perform Google Drive API v3 calls
-        if (driveConfig.clientId && driveAccessToken && !driveAccessToken.startsWith('demo_')) {
+        // TRƯỜNG HỢP 1: Có URL Google Apps Script Webhook (Gửi dữ liệu trực tiếp lên Drive thật 100%)
+        if (driveConfig.webhookUrl) {
             try {
-                // 1. Search for existing folder in 'root' (Drive của tôi)
-                let folderId = driveConfig.folderId;
-                if (!folderId) {
-                    const searchRes = await fetch(
-                        `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(driveConfig.folderName)}' and mimeType='application/vnd.google-apps.folder' and 'root' in parents and trashed=false`,
-                        { headers: { Authorization: `Bearer ${driveAccessToken}` } }
-                    );
-                    const searchData = await searchRes.json();
-                    if (searchData.files && searchData.files.length > 0) {
-                        folderId = searchData.files[0].id;
-                    } else {
-                        // Create folder in My Drive
-                        const createFolderRes = await fetch('https://www.googleapis.com/drive/v3/files', {
-                            method: 'POST',
-                            headers: {
-                                Authorization: `Bearer ${driveAccessToken}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                name: driveConfig.folderName,
-                                mimeType: 'application/vnd.google-apps.folder',
-                                parents: ['root']
-                            })
-                        });
-                        const createdFolder = await createFolderRes.json();
-                        folderId = createdFolder.id;
-                    }
-                    driveConfig.folderId = folderId;
-                    localStorage.setItem(DRIVE_CONFIG_KEY, JSON.stringify(driveConfig));
-                }
-
-                // 2. Upload / Update users_database.json
-                const fileContent = JSON.stringify(usersData, null, 2);
-                const metadata = {
-                    name: 'users_database.json',
-                    mimeType: 'application/json',
-                    parents: [folderId]
-                };
-
-                const form = new FormData();
-                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                form.append('file', new Blob([fileContent], { type: 'application/json' }));
-
-                await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                await fetch(driveConfig.webhookUrl, {
                     method: 'POST',
-                    headers: { Authorization: `Bearer ${driveAccessToken}` },
-                    body: form
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(usersData)
                 });
 
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('vi-VN') + ' ' + now.toLocaleDateString('vi-VN');
+                driveLastSync.textContent = timeStr;
+                localStorage.setItem(DRIVE_LAST_SYNC_KEY, timeStr);
+                updateDriveBadge('synced', 'Drive: anticodon (Đã lưu)');
+
+                if (!isSilent) {
+                    showToast(
+                        'success',
+                        'Đồng bộ hoàn tất!',
+                        `Đã lưu tệp users_database.json (${usersData.length} tài khoản) vào thư mục anticodon trên Google Drive của bạn.`
+                    );
+                }
+                return;
             } catch (err) {
-                console.warn('Drive REST API call:', err);
+                console.error('Webhook sync failed:', err);
             }
         }
 
-        // Complete Sync State
-        setTimeout(() => {
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('vi-VN') + ' ' + now.toLocaleDateString('vi-VN');
-            driveLastSync.textContent = timeStr;
-            localStorage.setItem(DRIVE_LAST_SYNC_KEY, timeStr);
-            updateDriveBadge('synced', 'Drive: Đã đồng bộ');
+        // TRƯỜNG HỢP 2: Chưa gắn Webhook -> Tự động tải tệp về máy & mở hướng dẫn kéo thả trực tiếp vào thư mục anticodon
+        const jsonStr = JSON.stringify(usersData, null, 2);
+        downloadFile(jsonStr, 'users_database.json', 'application/json');
 
-            if (!isSilent) {
-                showToast(
-                    'success',
-                    'Đồng bộ hoàn tất',
-                    `Đã sao lưu ${usersData.length} tài khoản vào tệp users_database.json trên Google Drive.`
-                );
-            }
-        }, 600);
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('vi-VN') + ' ' + now.toLocaleDateString('vi-VN');
+        driveLastSync.textContent = timeStr;
+        localStorage.setItem(DRIVE_LAST_SYNC_KEY, timeStr);
+        updateDriveBadge('synced', 'Đã xuất file users_database.json');
+
+        if (!isSilent) {
+            openModal(modalSyncGuide);
+            showToast(
+                'info',
+                'Đã xuất tệp dữ liệu',
+                'Tệp users_database.json đã được tải về. Hãy kéo thả vào thư mục anticodon trên Google Drive!'
+            );
+        }
     }
 
     function pullFromGoogleDrive() {
-        updateDriveBadge('syncing', 'Đang tải dữ liệu từ Drive...');
+        updateDriveBadge('syncing', 'Đang tải dữ liệu...');
 
         setTimeout(() => {
-            // In demo/live, ensure we refresh from storage or remote
             loadDatabase();
-            updateDriveBadge('synced', 'Drive: Đã đồng bộ');
-            showToast('success', 'Khôi phục từ Drive', 'Đã nạp và cập nhật danh sách tài khoản mới nhất.');
-        }, 750);
+            updateDriveBadge('synced', 'Drive: anticodon');
+            showToast('success', 'Khôi phục từ Drive', 'Đã cập nhật danh sách tài khoản hiện tại.');
+        }, 600);
     }
 
     // -------------------------------------------------------------

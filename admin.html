@@ -175,9 +175,9 @@
                             <p class="drive-desc">
                                 Kết nối trực tiếp với 
                                 <a href="https://drive.google.com/drive/my-drive" target="_blank" rel="noopener noreferrer" class="drive-folder-link">
-                                    <strong>Drive của tôi - Google Drive</strong> ↗
+                                    <strong>Drive của tôi > anticodon</strong> ↗
                                 </a>
-                                để tự động sao lưu danh sách tài khoản vào tệp <code>users_database.json</code>.
+                                để lưu trữ danh sách tài khoản vào tệp <code>users_database.json</code>.
                             </p>
                         </div>
                     </div>
@@ -229,7 +229,7 @@
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                             </svg>
-                            <span id="drive-folder-path">Drive của tôi / NovaAuth_Database</span>
+                            <span id="drive-folder-path">Drive của tôi / anticodon</span>
                         </div>
                     </div>
 
@@ -522,38 +522,124 @@
 
             <div class="modal-body-scroll">
                 <div class="notice-box">
-                    <div class="notice-title">📁 Vị trí lưu trữ mặc định:</div>
-                    <p>Ứng dụng sẽ tự động tạo và lưu trữ tệp tại thư mục: <strong>[Drive của tôi]/NovaAuth_Database/users_database.json</strong>.</p>
-                    <p>Quyền truy cập được giới hạn ở <code>drive.file</code> (Chỉ đọc/ghi tệp của ứng dụng tạo, tuyệt đối an toàn cho tài liệu cá nhân khác của bạn).</p>
+                    <div class="notice-title">📁 Thư mục Google Drive mục tiêu:</div>
+                    <p>Ứng dụng cấu hình lưu trữ tại: <strong>[Drive của tôi]/anticodon/users_database.json</strong>.</p>
                 </div>
 
                 <div class="form-group mt-3">
-                    <label for="google-client-id-input">Google OAuth 2.0 Client ID (Tùy chọn cho Production):</label>
-                    <input type="text" id="google-client-id-input" placeholder="Ví dụ: xxxxxxxx.apps.googleusercontent.com" class="font-mono">
-                    <small class="field-hint">Nếu để trống, hệ thống sẽ sử dụng chế độ mô phỏng lưu trữ đám mây thông minh (Demo Cloud Sync) kèm tính năng sao lưu JSON.</small>
+                    <label for="webhook-url-settings">Google Apps Script Webhook (Đồng bộ 1-chạm không cần Client ID):</label>
+                    <input type="url" id="webhook-url-settings" placeholder="https://script.google.com/macros/s/AKfycb.../exec" class="font-mono">
+                    <small class="field-hint">Dán URL Web App Google Apps Script vào đây để tệp tự bay vào Drive mỗi khi bấm Đồng Bộ.</small>
                 </div>
 
                 <div class="form-group">
                     <label for="drive-folder-name-input">Tên thư mục trên "Drive của tôi":</label>
-                    <input type="text" id="drive-folder-name-input" value="NovaAuth_Database">
+                    <input type="text" id="drive-folder-name-input" value="anticodon">
                 </div>
 
-                <div class="guide-accordion">
-                    <h4>🛠 Cách lấy Google Client ID miễn phí từ Google Cloud Console:</h4>
-                    <ol class="guide-steps">
-                        <li>Truy cập <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">Google Cloud Console</a> và tạo một Dự án (Project) mới.</li>
-                        <li>Vào <strong>APIs & Services</strong> ➔ <strong>Library</strong> ➔ Tìm và kích hoạt <strong>Google Drive API</strong>.</li>
-                        <li>Vào <strong>OAuth consent screen</strong> ➔ Chọn User Type là <strong>External</strong> ➔ Thêm scope <code>https://www.googleapis.com/auth/drive.file</code>.</li>
-                        <li>Vào <strong>Credentials</strong> ➔ Chọn <strong>Create Credentials</strong> ➔ <strong>OAuth client ID</strong> (Web application).</li>
-                        <li>Thêm địa chỉ nguồn gốc được phép: <code>http://localhost</code>, <code>http://127.0.0.1</code> hoặc tên miền web của bạn.</li>
-                        <li>Sao chép Client ID dán vào ô bên trên và nhấn Lưu cấu hình.</li>
-                    </ol>
+                <div class="form-group">
+                    <label for="google-client-id-input">Google OAuth 2.0 Client ID (Tùy chọn nâng cao):</label>
+                    <input type="text" id="google-client-id-input" placeholder="Ví dụ: xxxxxxxx.apps.googleusercontent.com" class="font-mono">
                 </div>
             </div>
 
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-close-modal="modal-drive-settings">Đóng</button>
                 <button type="button" id="btn-save-drive-config" class="btn btn-primary">Lưu Cấu Hình</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================
+         MODAL: HƯỚNG DẪN ĐỒNG BỘ VÀO GOOGLE DRIVE
+    ======================================================== -->
+    <div id="modal-sync-guide" class="modal-backdrop hidden">
+        <div class="modal-card modal-card-lg">
+            <div class="modal-header">
+                <div class="flex-align-center gap-2">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M7.74 3L1.5 13.8L5.25 20.3L11.49 9.5L7.74 3Z" fill="#0066DA"/>
+                        <path d="M16.26 3H7.74L11.49 9.5H20.01L16.26 3Z" fill="#00AC47"/>
+                        <path d="M22.5 13.8L16.26 3L11.49 9.5L17.73 20.3H22.5L22.5 13.8Z" fill="#EA4335"/>
+                        <path d="M5.25 20.3L9 13.8H21.49L17.74 20.3H5.25Z" fill="#FFBA00"/>
+                    </svg>
+                    <h3>Lưu Dữ Liệu Vào Thư Mục Google Drive (anticodon)</h3>
+                </div>
+                <button class="modal-close-btn" data-close-modal="modal-sync-guide">✕</button>
+            </div>
+
+            <div class="modal-body-scroll">
+                <div class="notice-box" style="background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.35);">
+                    <div class="notice-title" style="color: var(--success); font-size: 0.95rem;">
+                        ✅ Tệp <code>users_database.json</code> đã được tạo và tải về máy tính của bạn!
+                    </div>
+                    <p style="margin-top: 4px; font-size: 0.88rem;">
+                        Để tệp xuất hiện ngay lập tức trong thư mục <strong>anticodon</strong> trên Google Drive của bạn, bạn có thể thực hiện theo 2 cách:
+                    </p>
+                </div>
+
+                <!-- Method 1: Instant Drag & Drop -->
+                <div class="guide-accordion" style="margin-top: 14px; border: 1.5px solid rgba(99, 102, 241, 0.45); background: rgba(99, 102, 241, 0.05);">
+                    <h4 style="color: var(--accent-primary); font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <span>⚡ Cách 1: Kéo thả tệp vào Google Drive (Chỉ mất 2 giây)</span>
+                    </h4>
+                    <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 8px;">
+                        Trên cửa sổ Google Drive thư mục <strong>anticodon</strong> bạn đang mở:
+                    </p>
+                    <ol class="guide-steps" style="line-height: 1.7;">
+                        <li>Vào thư mục <strong>Downloads</strong> (Tải về) trên máy tính của bạn để thấy tệp <code>users_database.json</code>.</li>
+                        <li><strong>Kéo tệp `users_database.json`</strong> và <strong>thả trực tiếp</strong> vào cửa sổ Google Drive (nơi có dòng chữ <em>"Hãy thả tệp ở đây"</em>).</li>
+                        <li>Tệp sẽ xuất hiện ngay trong thư mục <strong>anticodon</strong> trên Google Drive!</li>
+                    </ol>
+                    <div style="margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button type="button" id="btn-re-download-json" class="btn btn-secondary btn-sm">
+                            📥 Bấm Tải Lại Tệp users_database.json
+                        </button>
+                        <a href="https://drive.google.com/drive/my-drive" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="text-decoration: none;">
+                            📂 Mở Google Drive Của Bạn ↗
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Method 2: Google Apps Script Webhook (100% Automatic) -->
+                <div class="guide-accordion" style="margin-top: 16px;">
+                    <h4 style="color: var(--accent-secondary); font-size: 1rem;">
+                        🤖 Cách 2: Tự động hóa 100% qua Google Apps Script (Không cần kéo thả)
+                    </h4>
+                    <p style="font-size: 0.86rem; color: var(--text-secondary); margin-bottom: 8px;">
+                        Tạo một Webhook miễn phí trên chính tài khoản Google của bạn để mỗi lần bấm <strong>"Đồng Bộ Lên Drive"</strong>, tệp sẽ tự động bay thẳng vào thư mục <code>anticodon</code>:
+                    </p>
+                    <ol class="guide-steps">
+                        <li>Truy cập <a href="https://script.google.com/home/start" target="_blank" rel="noopener"><strong>script.google.com</strong></a> ➔ Nhấn <strong>Dự án mới (New project)</strong>.</li>
+                        <li>Xóa hết mã cũ, dán đoạn mã bên dưới vào ➔ Nhấn <strong>Triển khai (Deploy) ➔ Tùy chọn triển khai mới (New deployment)</strong>.</li>
+                        <li>Chọn loại là <strong>Ứng dụng web (Web app)</strong>, mục <em>"Người có quyền truy cập"</em> chọn <strong>Bất kỳ ai (Anyone)</strong> ➔ Bấm <strong>Triển khai</strong>.</li>
+                        <li>Sao chép URL Web App (dạng <code>https://script.google.com/macros/s/.../exec</code>) dán vào ô bên dưới:</li>
+                    </ol>
+
+                    <div style="margin-top: 10px;">
+                        <pre style="background: rgba(0,0,0,0.5); padding: 12px; border-radius: 8px; font-size: 0.76rem; font-family: monospace; overflow-x: auto; max-height: 130px; user-select: all;" id="apps-script-code">function doPost(e) {
+  var data = JSON.parse(e.postData.contents);
+  var folders = DriveApp.getFoldersByName("anticodon");
+  var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder("anticodon");
+  var files = folder.getFilesByName("users_database.json");
+  var file = files.hasNext() ? files.next().setContent(JSON.stringify(data, null, 2)) : folder.createFile("users_database.json", JSON.stringify(data, null, 2), MimeType.PLAIN_TEXT);
+  return ContentService.createTextOutput(JSON.stringify({status: "success", fileId: file.getId()})).setMimeType(ContentService.MimeType.JSON);
+}</pre>
+                        <button type="button" id="btn-copy-script" class="btn btn-secondary btn-sm" style="margin-top: 6px;">
+                            📋 Sao Chép Đoạn Mã Trên
+                        </button>
+                    </div>
+
+                    <div class="form-group mt-3">
+                        <label for="webhook-url-input" style="font-size: 0.84rem; font-weight: 600;">Dán URL Web App của bạn vào đây:</label>
+                        <input type="url" id="webhook-url-input" placeholder="https://script.google.com/macros/s/AKfycb.../exec" class="font-mono">
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-close-modal="modal-sync-guide">Đóng</button>
+                <button type="button" id="btn-save-webhook-and-sync" class="btn btn-primary">Lưu URL & Đồng Bộ Ngay</button>
             </div>
         </div>
     </div>

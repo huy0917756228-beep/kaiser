@@ -21,15 +21,16 @@ Dự án xác thực tài khoản hiện đại, giao diện đồ họa cao c�
 
 ---
 
-## ☁️ 2. Kết Nối & Lưu Trữ Trên Google Drive
+## ☁️ 2. Kết Nối & Lưu Trữ Trên Google Drive (Thư mục anticodon)
 
-- 📁 **Vị trí lưu trữ tự động**: Hệ thống lưu vào thư mục `NovaAuth_Database` ngay trong **[Drive của tôi - Google Drive](https://drive.google.com/drive/my-drive)** dưới tệp `users_database.json`.
-- 🔒 **Quyền truy cập an toàn tối đa**: Sử dụng scope `https://www.googleapis.com/auth/drive.file` — chỉ có quyền thao tác trên tệp do chính ứng dụng tạo ra, bảo đảm 100% an toàn cho toàn bộ dữ liệu cá nhân khác của bạn trên Drive.
-- 🔄 **Tính năng đồng bộ thông minh**:
-  - **Tự động đồng bộ (Auto-Sync)**: Mỗi khi có tài khoản mới đăng ký từ `index.html` hoặc khi Admin khóa/sửa tài khoản, dữ liệu tự động cập nhật lên Google Drive.
-  - **Đồng bộ thủ công (Push to Drive)**: Nút đẩy bản ghi hiện tại lên Drive bất kỳ lúc nào.
-  - **Khôi phục từ Drive (Pull from Drive)**: Nạp lại cơ sở dữ liệu mới nhất từ Drive về hệ thống.
-  - **Huy hiệu trạng thái trực quan**: Đèn báo Live Sync (Xanh: Đã đồng bộ, Vàng: Đang đồng bộ, Đỏ: Chưa kết nối).
+- 📁 **Vị trí lưu trữ**: Hệ thống liên kết trực tiếp với thư mục **`anticodon`** trong **[Drive của tôi - Google Drive](https://drive.google.com/drive/my-drive)** dưới tệp `users_database.json`.
+- ⚡ **Cách 1 (Kéo thả 2 giây - Không cần cấu hình)**:
+  - Khi bấm **"Đồng Bộ Lên Drive"**, tệp `users_database.json` tự động tải về máy bạn.
+  - Bạn chỉ cần kéo tệp này thả trực tiếp vào cửa sổ Google Drive thư mục **`anticodon`** (ngay vị trí *"Hãy thả tệp ở đây"*).
+- 🤖 **Cách 2 (Tự động 100% qua Google Apps Script Webhook)**:
+  - Tạo Webhook miễn phí trên Google Apps Script với mã nguồn 8 dòng có sẵn.
+  - Dán URL Webhook vào mục Cài đặt trong trang Quản trị.
+  - Mỗi lần bấm **"Đồng Bộ Lên Drive"**, dữ liệu tự động bay thẳng vào thư mục `anticodon` trên Google Drive!
 
 ---
 
