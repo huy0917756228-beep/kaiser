@@ -81,6 +81,49 @@ document.addEventListener('DOMContentLoaded', () => {
     // Local Storage Keys
     const THEME_KEY = 'nova_auth_theme';
     const REMEMBER_EMAIL_KEY = 'nova_auth_saved_email';
+    const USERS_DB_KEY = 'nova_auth_users_db';
+
+    // Synchronize accounts with Admin Console database
+    function checkUserBlocked(email) {
+        const stored = localStorage.getItem(USERS_DB_KEY);
+        if (!stored) return false;
+        try {
+            const users = JSON.parse(stored);
+            const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+            return user && user.status === 'blocked';
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function syncUserToDatabase(name, email, provider, isNew = false) {
+        let users = [];
+        const stored = localStorage.getItem(USERS_DB_KEY);
+        if (stored) {
+            try { users = JSON.parse(stored); } catch (e) { users = []; }
+        }
+        const now = new Date();
+        const dateStr = now.toISOString().slice(0, 16).replace('T', ' ');
+
+        const existing = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+        if (existing) {
+            existing.lastLogin = dateStr;
+            if (name && (!existing.name || existing.name === 'Người dùng')) existing.name = name;
+        } else {
+            users.unshift({
+                id: 'usr_' + Date.now(),
+                name: name || email.split('@')[0],
+                email: email,
+                role: 'User',
+                status: 'active',
+                provider: provider,
+                createdAt: dateStr,
+                lastLogin: dateStr,
+                avatar: (name || email).charAt(0).toUpperCase()
+            });
+        }
+        localStorage.setItem(USERS_DB_KEY, JSON.stringify(users));
+    }
 
     // -------------------------------------------------------------
     // 1. Theme Management (Dark / Light)
@@ -320,6 +363,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (hasError) return;
 
+        // Check if account is blocked in Admin Dashboard
+        if (checkUserBlocked(email)) {
+            setFieldError('login-email', 'login-email-error', 'Tài khoản của bạn đã bị khóa bởi Quản trị viên');
+            showToast('error', 'Tài khoản bị khóa', 'Tài khoản này đã bị vô hiệu hóa.');
+            return;
+        }
+
         // Remember Me logic
         if (remember) {
             localStorage.setItem(REMEMBER_EMAIL_KEY, email);
@@ -338,9 +388,14 @@ document.addEventListener('DOMContentLoaded', () => {
             spinner.classList.add('hidden');
 
             const displayName = email.split('@')[0] || 'Người dùng';
+            const userEmail = email.includes('@') ? email : `${email}@example.com`;
+
+            // Sync with shared Admin database
+            syncUserToDatabase(displayName, userEmail, 'email', false);
+
             showSuccessState({
                 name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
-                email: email.includes('@') ? email : `${email}@example.com`,
+                email: userEmail,
                 method: 'Đăng nhập bằng Mật khẩu',
                 avatarChar: displayName.charAt(0).toUpperCase()
             });
@@ -422,6 +477,9 @@ document.addEventListener('DOMContentLoaded', () => {
             btnText.textContent = 'Đăng Ký Tài Khoản';
             spinner.classList.add('hidden');
 
+            // Sync registered user with Admin database
+            syncUserToDatabase(fullname, email, 'email', true);
+
             showSuccessState({
                 name: fullname,
                 email: email,
@@ -482,6 +540,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function completeGoogleAuth(name, email, avatarChar) {
         closeModal(googleModal);
         
+        // Check if account is blocked by Admin
+        if (checkUserBlocked(email)) {
+            showToast('error', 'Tài khoản bị khóa', 'Tài khoản Google này đã bị khóa bởi Quản trị viên');
+            return;
+        }
+
         // Show brief loading on main button
         btnGoogleAuth.disabled = true;
         googleSpinner.classList.remove('hidden');
@@ -491,6 +555,9 @@ document.addEventListener('DOMContentLoaded', () => {
             btnGoogleAuth.disabled = false;
             googleSpinner.classList.add('hidden');
             googleBtnText.textContent = tabLogin.classList.contains('active') ? 'Tiếp tục với Google' : 'Đăng ký nhanh với Google';
+
+            // Sync with Admin database
+            syncUserToDatabase(name, email, 'google', false);
 
             showSuccessState({
                 name: name,
@@ -523,7 +590,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     btnContinueDashboard.addEventListener('click', () => {
-        showToast('info', 'Bảng điều khiển', 'Chuyển hướng vào khu vực quản trị...');
+        showToast('info', 'Bảng điều khiển', 'Đang chuyển hướng sang Bảng Điều Khiển Quản Trị Viên...');
+        setTimeout(() => {
+            window.location.href = 'admin.html';
+        }, 600);
     });
 
     // -------------------------------------------------------------

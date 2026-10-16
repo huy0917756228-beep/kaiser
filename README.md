@@ -1,58 +1,52 @@
-# NovaAuth - Trang Đăng Nhập & Đăng Ký Tài Khoản Cao Cấp
+# NovaAuth - Hệ Thống Xác Thực & Bảng Điều Khiển Quản Trị Viên (Admin Console)
 
-Trang xác thực tài khoản hiện đại, giao diện đồ họa chuẩn Glassmorphism, hỗ trợ đăng ký/đăng nhập bằng Email/Mật khẩu hoặc Đăng nhập nhanh một chạm qua Google.
-
-## ✨ Tính năng nổi bật
-
-1. **Đăng nhập & Đăng ký linh hoạt (Dual Mode)**:
-   - Chuyển đổi mượt mà giữa 2 chế độ: **Đăng nhập** và **Đăng ký** bằng hiệu ứng segmented tab trượt.
-   - Ghi nhớ trạng thái phiên đăng nhập (*Remember me*) lưu trữ cục bộ an toàn.
-
-2. **Tích hợp Đăng nhập bằng Google**:
-   - Nút đăng nhập Google chuẩn thương hiệu chính thức (Official Google Branding Guidelines).
-   - Mô phỏng hộp thoại chọn tài khoản Google One-Tap / OAuth 2.0 trực quan với nhiều tài khoản demo hoặc nhập Gmail tùy chọn.
-   - Hướng dẫn tích hợp Google Identity Services (Client ID thật) khi đưa vào sản xuất.
-
-3. **Thanh đo độ mạnh mật khẩu thông minh (Password Strength Meter)**:
-   - Kiểm tra thời gian thực (Real-time) theo 4 tiêu chí: Độ dài tối thiểu 8 ký tự, Chữ hoa & chữ thường, Chữ số (0-9), Ký tự đặc biệt (!@#$...).
-   - Hiển thị mức độ: *Rất yếu*, *Yếu*, *Trung bình*, *Rất mạnh* với thanh màu động và checklist trực quan.
-
-4. **Trải nghiệm thị giác cao cấp**:
-   - Hiệu ứng ánh sáng nền đa tầng (*Ambient Glowing Gradient Orbs*).
-   - Thiết kế Glassmorphism trong suốt mờ với chiều sâu bóng đổ 3D.
-   - Nút chuyển đổi giao diện **Chế độ Tối (Dark Mode)** và **Chế độ Sáng (Light Mode)** lưu tùy chọn người dùng.
-   - Nút ẩn/hiện mật khẩu tiện lợi (Eye / Eye-off icon).
-   - Hệ thống thông báo nổi (Toast Notifications) thông minh khi đăng nhập, đăng ký, khôi phục mật khẩu hoặc đổi theme.
-
-5. **Khôi phục mật khẩu & Điều khoản**:
-   - Hộp thoại quên mật khẩu mô phỏng gửi link xác nhận đến hòm thư.
-   - Modal hiển thị Điều khoản dịch vụ và Chính sách bảo mật người dùng.
+Dự án xác thực tài khoản hiện đại, giao diện đồ họa cao cấp chuẩn **Glassmorphism**, tích hợp **Trang Quản trị viên (Admin Dashboard)** và cơ chế **Lưu trữ, đồng bộ dữ liệu tài khoản trên [Drive của tôi - Google Drive](https://drive.google.com/drive/my-drive)**.
 
 ---
 
-## 🚀 Cách mở và sử dụng
+## ✨ 1. Tính Năng Trang Quản Trị Viên (`admin.html`)
 
-Bạn chỉ cần mở trực tiếp file `index.html` trong bất kỳ trình duyệt web nào (Chrome, Edge, Firefox, Cốc Cốc, Safari...):
-
-- **Cách 1**: Kéo thả file `index.html` vào cửa sổ trình duyệt.
-- **Cách 2**: Nhấp đúp chuột vào file `index.html` trong thư mục `C:\tinhoc1`.
-- **Cách 3**: Chạy qua Live Server trên VS Code hoặc Antigravity IDE.
+- 🛡️ **Lớp bảo mật Admin PIN Gate**: Ngăn chặn truy cập trái phép bằng mã PIN bảo vệ 6 chữ số (Mã mặc định: `123456`).
+- 👥 **Quản lý danh sách người dùng chuyên nghiệp (CRUD)**:
+  - Xem danh sách đầy đủ: Avatar, Họ tên, Email, Vai trò, Phương thức, Ngày tham gia, Lần đăng nhập cuối, Trạng thái.
+  - **Khóa / Mở khóa tài khoản (Lock/Unlock)**: Tài khoản bị khóa sẽ lập tức bị chặn khi cố gắng đăng nhập tại trang người dùng.
+  - **Chuyển đổi vai trò**: Nâng cấp/hạ cấp nhanh giữa `Admin` và `User`.
+  - **Thêm tài khoản thủ công**: Modal thêm tài khoản mới trực tiếp từ giao diện quản trị.
+  - **Xóa tài khoản**: Xóa tài khoản với hộp thoại xác nhận an toàn.
+- 🔍 **Tìm kiếm & Lọc thời gian thực**: Tìm tức thì theo tên/email; lọc theo Trạng thái (Hoạt động/Đã khóa), Phương thức (Google/Email), Vai trò (Admin/User).
+- 📊 **Thẻ thống kê thông minh (KPIs)**: Đếm tổng tài khoản, tài khoản hoạt động, tài khoản bị khóa, tỉ lệ Google OAuth 2.0.
+- 📥 **Xuất / Nhập dữ liệu sao lưu**:
+  - Xuất danh sách dạng bảng tính Excel/CSV (`.csv` chuẩn UTF-8).
+  - Tải về tệp sao lưu JSON (`users_database.json`).
 
 ---
 
-## 🛠 Hướng dẫn gắn Google Client ID thật (Production OAuth 2.0)
+## ☁️ 2. Kết Nối & Lưu Trữ Trên Google Drive
 
-Nếu bạn muốn liên kết hệ thống backend thật của bạn với Google Cloud Console:
+- 📁 **Vị trí lưu trữ tự động**: Hệ thống lưu vào thư mục `NovaAuth_Database` ngay trong **[Drive của tôi - Google Drive](https://drive.google.com/drive/my-drive)** dưới tệp `users_database.json`.
+- 🔒 **Quyền truy cập an toàn tối đa**: Sử dụng scope `https://www.googleapis.com/auth/drive.file` — chỉ có quyền thao tác trên tệp do chính ứng dụng tạo ra, bảo đảm 100% an toàn cho toàn bộ dữ liệu cá nhân khác của bạn trên Drive.
+- 🔄 **Tính năng đồng bộ thông minh**:
+  - **Tự động đồng bộ (Auto-Sync)**: Mỗi khi có tài khoản mới đăng ký từ `index.html` hoặc khi Admin khóa/sửa tài khoản, dữ liệu tự động cập nhật lên Google Drive.
+  - **Đồng bộ thủ công (Push to Drive)**: Nút đẩy bản ghi hiện tại lên Drive bất kỳ lúc nào.
+  - **Khôi phục từ Drive (Pull from Drive)**: Nạp lại cơ sở dữ liệu mới nhất từ Drive về hệ thống.
+  - **Huy hiệu trạng thái trực quan**: Đèn báo Live Sync (Xanh: Đã đồng bộ, Vàng: Đang đồng bộ, Đỏ: Chưa kết nối).
+
+---
+
+## 🚀 3. Hướng Dẫn Sử Dụng & Mở Trang
+
+Mở trực tiếp trên bất kỳ trình duyệt nào:
+- **Trang Đăng Nhập / Đăng Ký Người Dùng**: Mở file [`index.html`](index.html).
+- **Trang Bảng Điều Khiển Quản Trị Viên**: Mở file [`admin.html`](admin.html) hoặc bấm nút **"Quản Trị"** ở góc trên bên phải của trang `index.html`.
+  - Mã PIN mặc định để vào bảng quản trị: **`123456`** (hoặc bấm nút *"Dùng mã mặc định"*).
+
+---
+
+## 🛠 4. Cấu Hình Google Client ID Cho Production (Tùy Chọn)
+
+Nếu bạn muốn cấu hình Client ID của riêng bạn trên Google Cloud Console:
 1. Truy cập [Google Cloud Console](https://console.cloud.google.com/).
-2. Tạo dự án mới và tạo **OAuth 2.0 Client ID** (Web application).
-3. Thêm thư viện Google Identity Services vào thẻ `<head>` trong `index.html`:
-   ```html
-   <script src="https://accounts.google.com/gsi/client" async defer></script>
-   ```
-4. Khởi tạo và xử lý token trả về trong `app.js`:
-   ```javascript
-   google.accounts.id.initialize({
-       client_id: "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com",
-       callback: handleCredentialResponse
-   });
-   ```
+2. Tạo dự án mới, vào mục **APIs & Services** ➔ Kích hoạt **Google Drive API**.
+3. Tại **Credentials**, tạo **OAuth 2.0 Client ID** (Web application).
+4. Thêm URL của trang web (ví dụ `http://localhost`, `http://127.0.0.1` hoặc tên miền hosting).
+5. Mở `admin.html`, bấm biểu tượng **Cài đặt Google Drive (bánh răng)** và dán Client ID của bạn vào ô cấu hình rồi nhấn Lưu.

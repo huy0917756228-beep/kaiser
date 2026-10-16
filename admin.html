@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Trang quản trị viên NovaAuth - Quản lý tài khoản người dùng và đồng bộ dữ liệu trên Google Drive">
+    <title>Bảng Điều Khiển Quản Trị Viên | NovaAuth Admin</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="admin.css">
+
+    <!-- Google Identity Services & Google API Client for Drive Sync -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body class="admin-body">
+    <!-- Ambient Background Glow -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+    <div class="ambient-glow glow-3"></div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- ========================================================
+         ADMIN SECURITY PIN GATE (Lớp Bảo Vệ Quản Trị Viên)
+    ======================================================== -->
+    <div id="admin-gate" class="admin-gate">
+        <div class="gate-card">
+            <div class="gate-icon-wrapper">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+            </div>
+            <h2>Xác Thực Quản Trị Viên</h2>
+            <p>Vui lòng nhập mã bảo vệ (Security PIN) để truy cập Bảng điều khiển quản lý tài khoản.</p>
+
+            <form id="gate-form" class="gate-form">
+                <div class="pin-inputs-container">
+                    <input type="password" maxlength="1" class="pin-digit" autofocus>
+                    <input type="password" maxlength="1" class="pin-digit">
+                    <input type="password" maxlength="1" class="pin-digit">
+                    <input type="password" maxlength="1" class="pin-digit">
+                    <input type="password" maxlength="1" class="pin-digit">
+                    <input type="password" maxlength="1" class="pin-digit">
+                </div>
+                <div id="gate-error" class="field-error text-center hidden">Mã PIN không chính xác. Thử lại!</div>
+
+                <div class="gate-actions">
+                    <button type="submit" id="btn-submit-gate" class="btn btn-primary btn-block">
+                        <span class="btn-text">Mở Khóa Quản Trị</span>
+                    </button>
+                    <div class="gate-sublinks">
+                        <button type="button" id="btn-quick-unlock" class="text-btn">Dùng mã mặc định (123456)</button>
+                        <span>•</span>
+                        <a href="index.html" class="text-btn">Quay lại trang Đăng nhập</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================
+         MAIN ADMIN LAYOUT
+    ======================================================== -->
+    <div id="admin-app" class="admin-app hidden">
+        <!-- Top Navigation Bar -->
+        <header class="admin-navbar">
+            <div class="nav-left">
+                <a href="admin.html" class="brand-link">
+                    <div class="brand-logo-small">
+                        <svg width="28" height="28" viewBox="0 0 36 36" fill="none">
+                            <rect width="36" height="36" rx="8" fill="url(#admin-logo-grad)"/>
+                            <path d="M18 9L26 14.5V23.5L18 29L10 23.5V14.5L18 9Z" stroke="white" stroke-width="2.2" stroke-linejoin="round"/>
+                            <circle cx="18" cy="18" r="4" fill="white"/>
+                            <defs>
+                                <linearGradient id="admin-logo-grad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+                                    <stop stop-color="#6366F1"/>
+                                    <stop offset="1" stop-color="#A855F7"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <div class="brand-title-wrap">
+                        <span class="brand-name">NovaAuth</span>
+                        <span class="admin-tag">Admin Console</span>
+                    </div>
+                </a>
+
+                <!-- Google Drive Quick Status Badge -->
+                <div id="drive-quick-badge" class="drive-quick-badge" title="Trạng thái kết nối Google Drive">
+                    <svg class="drive-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M7.74 3L1.5 13.8L5.25 20.3L11.49 9.5L7.74 3Z" fill="#0066DA"/>
+                        <path d="M16.26 3H7.74L11.49 9.5H20.01L16.26 3Z" fill="#00AC47"/>
+                        <path d="M22.5 13.8L16.26 3L11.49 9.5L17.73 20.3H22.5L22.5 13.8Z" fill="#EA4335"/>
+                        <path d="M5.25 20.3L9 13.8H21.49L17.74 20.3H5.25Z" fill="#FFBA00"/>
+                    </svg>
+                    <span id="drive-badge-status">Drive: Chưa kết nối</span>
+                    <span id="drive-badge-dot" class="status-indicator-dot dot-offline"></span>
+                </div>
+            </div>
+
+            <div class="nav-right">
+                <!-- Theme Toggle Button -->
+                <button id="admin-theme-toggle" class="icon-action-btn" title="Chuyển đổi giao diện Sáng / Tối">
+                    <svg class="theme-icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="theme-icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+
+                <!-- Back to Portal Link -->
+                <a href="index.html" class="nav-btn-link" title="Mở trang đăng nhập / đăng ký của người dùng">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                        <polyline points="10 17 15 12 10 7"></polyline>
+                        <line x1="15" y1="12" x2="3" y2="12"></line>
+                    </svg>
+                    <span>Trang Xác Thực</span>
+                </a>
+
+                <!-- Admin Profile Pill -->
+                <div class="admin-profile-pill">
+                    <div class="admin-avatar">AD</div>
+                    <div class="admin-info-mini">
+                        <span class="admin-name">Quản Trị Viên</span>
+                        <span class="admin-role">Super Admin</span>
+                    </div>
+                    <button id="btn-admin-logout" class="icon-logout-btn" title="Khóa bảng điều khiển">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="admin-main-container">
+
+            <!-- ========================================================
+                 GOOGLE DRIVE CLOUD SYNC HUB
+            ======================================================== -->
+            <section class="card drive-hub-card">
+                <div class="drive-hub-header">
+                    <div class="drive-hub-title">
+                        <div class="drive-logo-box">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M7.74 3L1.5 13.8L5.25 20.3L11.49 9.5L7.74 3Z" fill="#0066DA"/>
+                                <path d="M16.26 3H7.74L11.49 9.5H20.01L16.26 3Z" fill="#00AC47"/>
+                                <path d="M22.5 13.8L16.26 3L11.49 9.5L17.73 20.3H22.5L22.5 13.8Z" fill="#EA4335"/>
+                                <path d="M5.25 20.3L9 13.8H21.49L17.74 20.3H5.25Z" fill="#FFBA00"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2>Lưu Trữ & Đồng Bộ Google Drive</h2>
+                            <p class="drive-desc">
+                                Kết nối trực tiếp với 
+                                <a href="https://drive.google.com/drive/my-drive" target="_blank" rel="noopener noreferrer" class="drive-folder-link">
+                                    <strong>Drive của tôi - Google Drive</strong> ↗
+                                </a>
+                                để tự động sao lưu danh sách tài khoản vào tệp <code>users_database.json</code>.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Drive Action Buttons -->
+                    <div class="drive-actions">
+                        <button id="btn-connect-drive" class="btn btn-google-drive">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                <path d="M7.74 3L1.5 13.8L5.25 20.3L11.49 9.5L7.74 3Z" fill="#0066DA"/>
+                                <path d="M16.26 3H7.74L11.49 9.5H20.01L16.26 3Z" fill="#00AC47"/>
+                                <path d="M22.5 13.8L16.26 3L11.49 9.5L17.73 20.3H22.5L22.5 13.8Z" fill="#EA4335"/>
+                                <path d="M5.25 20.3L9 13.8H21.49L17.74 20.3H5.25Z" fill="#FFBA00"/>
+                            </svg>
+                            <span id="btn-connect-drive-text">Kết Nối Google Drive</span>
+                        </button>
+
+                        <button id="btn-sync-now" class="btn btn-secondary" title="Đẩy dữ liệu hiện tại lên Google Drive">
+                            <svg class="sync-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <polyline points="1 20 1 14 7 14"></polyline>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                            <span>Đồng Bộ Lên Drive</span>
+                        </button>
+
+                        <button id="btn-pull-drive" class="btn btn-secondary" title="Tải dữ liệu mới nhất từ Google Drive về">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            <span>Khôi Phục Từ Drive</span>
+                        </button>
+
+                        <button id="btn-open-drive-settings" class="icon-circle-btn" title="Cài đặt cấu hình API">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Drive Info Grid -->
+                <div class="drive-info-grid">
+                    <div class="drive-meta-item">
+                        <span class="meta-label">Thư mục đích:</span>
+                        <div class="meta-val-badge">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                            <span id="drive-folder-path">Drive của tôi / NovaAuth_Database</span>
+                        </div>
+                    </div>
+
+                    <div class="drive-meta-item">
+                        <span class="meta-label">Tệp dữ liệu:</span>
+                        <div class="meta-val-badge">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                            </svg>
+                            <span id="drive-file-name">users_database.json</span>
+                        </div>
+                    </div>
+
+                    <div class="drive-meta-item">
+                        <span class="meta-label">Lần đồng bộ cuối:</span>
+                        <span id="drive-last-sync" class="meta-text-val">Chưa có bản đồng bộ</span>
+                    </div>
+
+                    <div class="drive-meta-item drive-auto-sync-box">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-auto-sync" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span class="toggle-label">Tự động đồng bộ khi có thay đổi</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================================
+                 KEY PERFORMANCE METRICS (KPIs)
+            ======================================================== -->
+            <section class="kpi-grid">
+                <!-- Card 1: Total Users -->
+                <div class="kpi-card">
+                    <div class="kpi-icon-box kpi-icon-purple">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Tổng Số Tài Khoản</span>
+                        <span id="kpi-total-users" class="kpi-number">0</span>
+                    </div>
+                    <div class="kpi-trend positive">
+                        <span>Đã lưu trữ an toàn</span>
+                    </div>
+                </div>
+
+                <!-- Card 2: Active Users -->
+                <div class="kpi-card">
+                    <div class="kpi-icon-box kpi-icon-green">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                    </div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Đang Hoạt Động</span>
+                        <span id="kpi-active-users" class="kpi-number">0</span>
+                    </div>
+                    <div class="kpi-trend">
+                        <span id="kpi-active-percent">100% người dùng</span>
+                    </div>
+                </div>
+
+                <!-- Card 3: Google Sign-in Users -->
+                <div class="kpi-card">
+                    <div class="kpi-icon-box kpi-icon-blue">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+                        </svg>
+                    </div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Đăng Nhập Google</span>
+                        <span id="kpi-google-users" class="kpi-number">0</span>
+                    </div>
+                    <div class="kpi-trend">
+                        <span id="kpi-google-percent">OAuth 2.0</span>
+                    </div>
+                </div>
+
+                <!-- Card 4: Blocked Users -->
+                <div class="kpi-card">
+                    <div class="kpi-icon-box kpi-icon-red">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                        </svg>
+                    </div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Đang Bị Khóa</span>
+                        <span id="kpi-blocked-users" class="kpi-number">0</span>
+                    </div>
+                    <div class="kpi-trend alert">
+                        <span>Hạn chế truy cập</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================================
+                 USER MANAGEMENT SECTION
+            ======================================================== -->
+            <section class="card table-card">
+                <!-- Toolbar -->
+                <div class="table-toolbar">
+                    <div class="toolbar-left">
+                        <div class="search-input-wrapper">
+                            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                            <input type="text" id="user-search-input" placeholder="Tìm theo họ tên, email..." aria-label="Tìm kiếm người dùng">
+                            <button id="btn-clear-search" class="btn-clear-search hidden" title="Xóa tìm kiếm">✕</button>
+                        </div>
+
+                        <!-- Filter: Status -->
+                        <select id="filter-status" class="filter-select">
+                            <option value="all">Mọi trạng thái</option>
+                            <option value="active">Đang hoạt động</option>
+                            <option value="blocked">Đã bị khóa</option>
+                        </select>
+
+                        <!-- Filter: Provider -->
+                        <select id="filter-provider" class="filter-select">
+                            <option value="all">Mọi phương thức</option>
+                            <option value="google">Google OAuth</option>
+                            <option value="email">Email / Mật khẩu</option>
+                        </select>
+
+                        <!-- Filter: Role -->
+                        <select id="filter-role" class="filter-select">
+                            <option value="all">Mọi vai trò</option>
+                            <option value="Admin">Admin</option>
+                            <option value="User">User</option>
+                        </select>
+                    </div>
+
+                    <div class="toolbar-right">
+                        <button id="btn-export-csv" class="btn btn-secondary btn-sm" title="Xuất danh sách ra file CSV">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            <span>Xuất CSV</span>
+                        </button>
+
+                        <button id="btn-export-json" class="btn btn-secondary btn-sm" title="Xuất bản sao lưu JSON">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                            </svg>
+                            <span>Tải Backup JSON</span>
+                        </button>
+
+                        <button id="btn-add-user" class="btn btn-primary btn-sm">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            <span>+ Thêm Tài Khoản</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Table Wrapper -->
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Người Dùng</th>
+                                <th>Vai Trò</th>
+                                <th>Phương Thức</th>
+                                <th>Ngày Tạo</th>
+                                <th>Đăng Nhập Cuối</th>
+                                <th>Trạng Thái</th>
+                                <th class="text-right">Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-table-body">
+                            <!-- Injected dynamically via JS -->
+                        </tbody>
+                    </table>
+
+                    <!-- Empty State -->
+                    <div id="table-empty-state" class="empty-state hidden">
+                        <div class="empty-icon">🔍</div>
+                        <h3>Không tìm thấy tài khoản nào</h3>
+                        <p>Thử tìm kiếm với từ khóa khác hoặc xóa bộ lọc để hiển thị đầy đủ danh sách.</p>
+                        <button id="btn-reset-filters" class="btn btn-secondary btn-sm">Đặt Lại Bộ Lọc</button>
+                    </div>
+                </div>
+
+                <!-- Table Footer / Count -->
+                <div class="table-footer">
+                    <span id="table-record-count">Đang hiển thị 0 tài khoản</span>
+                    <div class="footer-actions">
+                        <button id="btn-seed-demo" class="text-btn">Nạp dữ liệu mẫu</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ========================================================
+         MODAL: ADD NEW USER
+    ======================================================== -->
+    <div id="modal-add-user" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Thêm Tài Khoản Mới</h3>
+                <button class="modal-close-btn" data-close-modal="modal-add-user">✕</button>
+            </div>
+            <form id="form-add-user">
+                <div class="form-group">
+                    <label for="new-fullname">Họ và tên <span class="required">*</span></label>
+                    <input type="text" id="new-fullname" placeholder="Ví dụ: Nguyễn Văn A" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="new-email">Địa chỉ Email <span class="required">*</span></label>
+                    <input type="email" id="new-email" placeholder="example@domain.com" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label for="new-role">Vai trò</label>
+                        <select id="new-role" class="filter-select">
+                            <option value="User">User</option>
+                            <option value="Admin">Admin</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group flex-1">
+                        <label for="new-provider">Phương thức</label>
+                        <select id="new-provider" class="filter-select">
+                            <option value="email">Email & Mật khẩu</option>
+                            <option value="google">Google OAuth</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group" id="new-password-group">
+                    <label for="new-password">Mật khẩu ban đầu</label>
+                    <input type="password" id="new-password" placeholder="Tối thiểu 8 ký tự" value="NovaAuth@2026">
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-close-modal="modal-add-user">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu Tài Khoản</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================
+         MODAL: GOOGLE DRIVE API SETTINGS
+    ======================================================== -->
+    <div id="modal-drive-settings" class="modal-backdrop hidden">
+        <div class="modal-card modal-card-lg">
+            <div class="modal-header">
+                <div class="flex-align-center gap-2">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <path d="M7.74 3L1.5 13.8L5.25 20.3L11.49 9.5L7.74 3Z" fill="#0066DA"/>
+                        <path d="M16.26 3H7.74L11.49 9.5H20.01L16.26 3Z" fill="#00AC47"/>
+                        <path d="M22.5 13.8L16.26 3L11.49 9.5L17.73 20.3H22.5L22.5 13.8Z" fill="#EA4335"/>
+                        <path d="M5.25 20.3L9 13.8H21.49L17.74 20.3H5.25Z" fill="#FFBA00"/>
+                    </svg>
+                    <h3>Cấu Hình Kết Nối Google Drive</h3>
+                </div>
+                <button class="modal-close-btn" data-close-modal="modal-drive-settings">✕</button>
+            </div>
+
+            <div class="modal-body-scroll">
+                <div class="notice-box">
+                    <div class="notice-title">📁 Vị trí lưu trữ mặc định:</div>
+                    <p>Ứng dụng sẽ tự động tạo và lưu trữ tệp tại thư mục: <strong>[Drive của tôi]/NovaAuth_Database/users_database.json</strong>.</p>
+                    <p>Quyền truy cập được giới hạn ở <code>drive.file</code> (Chỉ đọc/ghi tệp của ứng dụng tạo, tuyệt đối an toàn cho tài liệu cá nhân khác của bạn).</p>
+                </div>
+
+                <div class="form-group mt-3">
+                    <label for="google-client-id-input">Google OAuth 2.0 Client ID (Tùy chọn cho Production):</label>
+                    <input type="text" id="google-client-id-input" placeholder="Ví dụ: xxxxxxxx.apps.googleusercontent.com" class="font-mono">
+                    <small class="field-hint">Nếu để trống, hệ thống sẽ sử dụng chế độ mô phỏng lưu trữ đám mây thông minh (Demo Cloud Sync) kèm tính năng sao lưu JSON.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="drive-folder-name-input">Tên thư mục trên "Drive của tôi":</label>
+                    <input type="text" id="drive-folder-name-input" value="NovaAuth_Database">
+                </div>
+
+                <div class="guide-accordion">
+                    <h4>🛠 Cách lấy Google Client ID miễn phí từ Google Cloud Console:</h4>
+                    <ol class="guide-steps">
+                        <li>Truy cập <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">Google Cloud Console</a> và tạo một Dự án (Project) mới.</li>
+                        <li>Vào <strong>APIs & Services</strong> ➔ <strong>Library</strong> ➔ Tìm và kích hoạt <strong>Google Drive API</strong>.</li>
+                        <li>Vào <strong>OAuth consent screen</strong> ➔ Chọn User Type là <strong>External</strong> ➔ Thêm scope <code>https://www.googleapis.com/auth/drive.file</code>.</li>
+                        <li>Vào <strong>Credentials</strong> ➔ Chọn <strong>Create Credentials</strong> ➔ <strong>OAuth client ID</strong> (Web application).</li>
+                        <li>Thêm địa chỉ nguồn gốc được phép: <code>http://localhost</code>, <code>http://127.0.0.1</code> hoặc tên miền web của bạn.</li>
+                        <li>Sao chép Client ID dán vào ô bên trên và nhấn Lưu cấu hình.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-close-modal="modal-drive-settings">Đóng</button>
+                <button type="button" id="btn-save-drive-config" class="btn btn-primary">Lưu Cấu Hình</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden File Input for Importing JSON -->
+    <input type="file" id="import-json-input" accept=".json" class="hidden">
+
+    <!-- Admin JavaScript Engine -->
+    <script src="admin.js"></script>
+</body>
+</html>
