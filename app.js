@@ -102,6 +102,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (stored) {
             try { users = JSON.parse(stored); } catch (e) { users = []; }
         }
+        
+        // Filter out dummy/fake accounts
+        const DUMMY_EMAILS = [
+            'alex.johnson@techcorp.io',
+            'mai.tran@business.vn',
+            'nam.le@kaiser.dev',
+            'tran.hoa.designer@gmail.com',
+            'nguyen.an.dev@gmail.com',
+            'sarah.smith.design@gmail.com'
+        ];
+        users = users.filter(u => u && u.email && !DUMMY_EMAILS.includes(u.email.toLowerCase()));
+
         const now = new Date();
         const dateStr = now.toISOString().slice(0, 16).replace('T', ' ');
 
@@ -109,12 +121,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (existing) {
             existing.lastLogin = dateStr;
             if (name && (!existing.name || existing.name === 'Người dùng')) existing.name = name;
+            if (email.toLowerCase() === 'huy0917756228@gmail.com') existing.role = 'Admin';
         } else {
+            const role = (email.toLowerCase() === 'huy0917756228@gmail.com') ? 'Admin' : 'User';
             users.unshift({
                 id: 'usr_' + Date.now(),
                 name: name || email.split('@')[0],
                 email: email,
-                role: 'User',
+                role: role,
                 status: 'active',
                 provider: provider,
                 createdAt: dateStr,

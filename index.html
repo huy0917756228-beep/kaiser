@@ -487,24 +487,12 @@
             <p class="google-modal-sub">Chọn tài khoản Google của bạn để liên kết với NovaAuth</p>
 
             <div class="google-account-list">
-                <!-- Preset Account 1 -->
-                <button type="button" class="google-account-item" data-email="nguyen.an.dev@gmail.com" data-name="Nguyễn Văn An" data-avatar="A">
-                    <div class="google-avatar" style="background: linear-gradient(135deg, #4285F4, #34A853);">A</div>
+                <!-- Real Admin Account -->
+                <button type="button" class="google-account-item" data-email="huy0917756228@gmail.com" data-name="Nguyễn Văn Huy" data-avatar="H">
+                    <div class="google-avatar" style="background: linear-gradient(135deg, #6366F1, #A855F7);">H</div>
                     <div class="google-account-details">
-                        <strong class="google-acc-name">Nguyễn Văn An</strong>
-                        <span class="google-acc-email">nguyen.an.dev@gmail.com</span>
-                    </div>
-                    <svg class="google-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
-                </button>
-
-                <!-- Preset Account 2 -->
-                <button type="button" class="google-account-item" data-email="tran.hoa.designer@gmail.com" data-name="Trần Thị Hoa" data-avatar="H">
-                    <div class="google-avatar" style="background: linear-gradient(135deg, #EA4335, #FBBC05);">H</div>
-                    <div class="google-account-details">
-                        <strong class="google-acc-name">Trần Thị Hoa</strong>
-                        <span class="google-acc-email">tran.hoa.designer@gmail.com</span>
+                        <strong class="google-acc-name">Nguyễn Văn Huy (Quản trị viên)</strong>
+                        <span class="google-acc-email">huy0917756228@gmail.com</span>
                     </div>
                     <svg class="google-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="9 18 15 12 9 6"></polyline>
@@ -520,17 +508,17 @@
                         </svg>
                     </div>
                     <div class="google-account-details">
-                        <strong class="google-acc-name">Sử dụng tài khoản khác</strong>
-                        <span class="google-acc-email">Nhập email Google cá nhân của bạn</span>
+                        <strong class="google-acc-name">Đăng nhập tài khoản Google khác</strong>
+                        <span class="google-acc-email">Nhập địa chỉ Gmail của người dùng</span>
                     </div>
                 </button>
             </div>
 
             <!-- Custom Email input form if user selects custom -->
             <form id="google-custom-form" class="google-custom-form hidden">
-                <input type="email" id="google-custom-email-input" class="form-input" placeholder="Nhập địa chỉ Gmail..." required>
+                <input type="email" id="google-custom-email-input" class="form-input" placeholder="Nhập địa chỉ Gmail của bạn..." required>
                 <button type="submit" class="btn btn-primary" style="margin-top: 10px; width: 100%;">
-                    Tiếp tục với tài khoản này
+                    Xác nhận đăng nhập Google
                 </button>
             </form>
 

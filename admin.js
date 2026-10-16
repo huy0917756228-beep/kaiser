@@ -15,52 +15,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const DEFAULT_PIN = '123456';
 
-    // Initial Seed Users (If database is empty)
-    const SEED_USERS = [
-        {
-            id: 'usr_' + Date.now() + '_1',
-            name: 'Nguyễn Văn Huy',
-            email: 'huy0917756228@gmail.com',
-            role: 'Admin',
-            status: 'active',
-            provider: 'google',
-            createdAt: '2026-10-15 08:30',
-            lastLogin: '2026-10-16 20:30',
-            avatar: 'H'
-        },
-        {
-            id: 'usr_' + Date.now() + '_2',
-            name: 'Alex Johnson',
-            email: 'alex.johnson@techcorp.io',
-            role: 'User',
-            status: 'active',
-            provider: 'google',
-            createdAt: '2026-10-14 14:20',
-            lastLogin: '2026-10-16 19:15',
-            avatar: 'A'
-        },
-        {
-            id: 'usr_' + Date.now() + '_3',
-            name: 'Trần Thị Mai',
-            email: 'mai.tran@business.vn',
-            role: 'User',
-            status: 'active',
-            provider: 'email',
-            createdAt: '2026-10-13 10:00',
-            lastLogin: '2026-10-15 11:45',
-            avatar: 'M'
-        },
-        {
-            id: 'usr_' + Date.now() + '_4',
-            name: 'Lê Hoàng Nam',
-            email: 'nam.le@kaiser.dev',
-            role: 'User',
-            status: 'blocked',
-            provider: 'email',
-            createdAt: '2026-10-12 16:10',
-            lastLogin: '2026-10-14 09:20',
-            avatar: 'N'
-        }
+    // Real Admin Account (Chính thức)
+    const REAL_ADMIN_USER = {
+        id: 'usr_admin_huy',
+        name: 'Nguyễn Văn Huy',
+        email: 'huy0917756228@gmail.com',
+        role: 'Admin',
+        status: 'active',
+        provider: 'google',
+        createdAt: '2026-10-15 08:30',
+        lastLogin: '2026-10-16 20:30',
+        avatar: 'H'
+    };
+
+    // Danh sách các email tài khoản ảo / tài khoản mẫu cần tự động lọc bỏ
+    const DUMMY_EMAILS = [
+        'alex.johnson@techcorp.io',
+        'mai.tran@business.vn',
+        'nam.le@kaiser.dev',
+        'tran.hoa.designer@gmail.com',
+        'nguyen.an.dev@gmail.com',
+        'sarah.smith.design@gmail.com'
     ];
 
     // -------------------------------------------------------------
@@ -96,7 +71,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const filterProvider = document.getElementById('filter-provider');
     const filterRole = document.getElementById('filter-role');
     const btnResetFilters = document.getElementById('btn-reset-filters');
-    const btnSeedDemo = document.getElementById('btn-seed-demo');
+    const btnCleanFakeTop = document.getElementById('btn-clean-fake-top');
+    const btnCleanFakeUsers = document.getElementById('btn-clean-fake-users');
+    const btnClearAllUsers = document.getElementById('btn-clear-all-users');
 
     // User Actions
     const btnAddUser = document.getElementById('btn-add-user');
@@ -233,14 +210,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (stored) {
             try {
                 usersData = JSON.parse(stored);
+                // Tự động quét và loại bỏ mọi tài khoản ảo / tài khoản thử nghiệm
+                const initialCount = usersData.length;
+                usersData = usersData.filter(u => u && u.email && !DUMMY_EMAILS.includes(u.email.toLowerCase()));
+
+                // Nếu danh sách không còn ai, bảo đảm tài khoản Quản trị viên chính vẫn tồn tại
+                if (usersData.length === 0) {
+                    usersData = [REAL_ADMIN_USER];
+                }
+
+                if (usersData.length !== initialCount) {
+                    localStorage.setItem(USERS_DB_KEY, JSON.stringify(usersData));
+                }
             } catch (err) {
                 console.error('Error parsing stored users:', err);
-                usersData = [...SEED_USERS];
-                saveDatabase();
+                usersData = [REAL_ADMIN_USER];
+                localStorage.setItem(USERS_DB_KEY, JSON.stringify(usersData));
             }
         } else {
-            usersData = [...SEED_USERS];
-            saveDatabase();
+            usersData = [REAL_ADMIN_USER];
+            localStorage.setItem(USERS_DB_KEY, JSON.stringify(usersData));
         }
         renderTable();
         updateKPIs();
@@ -413,12 +402,41 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTable();
     });
 
-    // Seed Demo Data button
-    btnSeedDemo.addEventListener('click', () => {
-        usersData = [...SEED_USERS];
+    // Dọn dẹp tài khoản ảo (Clean Fake Accounts)
+    function handleCleanFakeAccounts() {
+        const initialCount = usersData.length;
+        usersData = usersData.filter(u => u && u.email && !DUMMY_EMAILS.includes(u.email.toLowerCase()));
+        if (usersData.length === 0) {
+            usersData = [REAL_ADMIN_USER];
+        }
         saveDatabase();
-        showToast('info', 'Dữ liệu mẫu', 'Đã nạp lại 4 tài khoản mẫu thành công.');
-    });
+        const removed = initialCount - usersData.length;
+        showToast(
+            'success',
+            'Đã dọn dẹp',
+            removed > 0 
+                ? `Đã xóa sạch ${removed} tài khoản ảo. Bảng quản trị hiện chỉ lưu các tài khoản đăng nhập thực tế!` 
+                : 'Hệ thống đã sạch, không có tài khoản ảo nào.'
+        );
+    }
+
+    if (btnCleanFakeTop) {
+        btnCleanFakeTop.addEventListener('click', handleCleanFakeAccounts);
+    }
+
+    if (btnCleanFakeUsers) {
+        btnCleanFakeUsers.addEventListener('click', handleCleanFakeAccounts);
+    }
+
+    if (btnClearAllUsers) {
+        btnClearAllUsers.addEventListener('click', () => {
+            if (confirm('Bạn có chắc muốn đặt lại danh sách? Các tài khoản khác sẽ bị xóa, chỉ giữ lại tài khoản Quản trị viên.')) {
+                usersData = [REAL_ADMIN_USER];
+                saveDatabase();
+                showToast('info', 'Đặt lại danh sách', 'Đã đặt lại danh sách, chỉ giữ lại tài khoản Quản trị viên chính.');
+            }
+        });
+    }
 
     // -------------------------------------------------------------
     // 5. Global Actions (Toggle status, role, delete)

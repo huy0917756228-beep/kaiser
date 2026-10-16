@@ -392,6 +392,14 @@
                             <span>Tải Backup JSON</span>
                         </button>
 
+                        <button id="btn-clean-fake-top" class="btn btn-secondary btn-sm" title="Xóa toàn bộ các tài khoản thử nghiệm / tài khoản ảo" style="color: #f87171;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            <span>Xóa Tài Khoản Ảo</span>
+                        </button>
+
                         <button id="btn-add-user" class="btn btn-primary btn-sm">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -424,8 +432,8 @@
                     <!-- Empty State -->
                     <div id="table-empty-state" class="empty-state hidden">
                         <div class="empty-icon">🔍</div>
-                        <h3>Không tìm thấy tài khoản nào</h3>
-                        <p>Thử tìm kiếm với từ khóa khác hoặc xóa bộ lọc để hiển thị đầy đủ danh sách.</p>
+                        <h3>Chưa có tài khoản đăng nhập nào</h3>
+                        <p>Các tài khoản người dùng đăng nhập hoặc đăng ký từ trang sẽ tự động xuất hiện tại đây.</p>
                         <button id="btn-reset-filters" class="btn btn-secondary btn-sm">Đặt Lại Bộ Lọc</button>
                     </div>
                 </div>
@@ -434,7 +442,9 @@
                 <div class="table-footer">
                     <span id="table-record-count">Đang hiển thị 0 tài khoản</span>
                     <div class="footer-actions">
-                        <button id="btn-seed-demo" class="text-btn">Nạp dữ liệu mẫu</button>
+                        <button id="btn-clean-fake-users" class="text-btn" style="color: #f87171;">🧹 Xóa sạch tài khoản ảo</button>
+                        <span>•</span>
+                        <button id="btn-clear-all-users" class="text-btn" style="color: var(--text-muted);">🗑️ Đặt lại danh sách</button>
                     </div>
                 </div>
             </section>
